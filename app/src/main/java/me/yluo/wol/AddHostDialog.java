@@ -24,7 +24,7 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
         if (hostBean == null) {
             String host = NetUtil.getLocalIp();
             if (TextUtils.isEmpty(host)) {
-                host = "192.168.1.1";
+                host = NetUtil.DEFAULT_IP;
             }
             hostBean = new HostBean(host);
         }
@@ -122,7 +122,7 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
                 break;
             case R.id.btn_ok:
                 if (checkInput()) {
-                    dialogListener.onAddHostOkClick(null);
+                    dialogListener.onAddHostOkClick(bean);
                     dismiss();
                 }
                 break;

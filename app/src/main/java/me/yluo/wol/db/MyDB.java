@@ -134,10 +134,11 @@ public class MyDB {
         this.db.close();
     }
 
-    public boolean isMacInHost(String mac) {
+
+    public boolean isHostExist(HostBean bean) {
         initDb();
-        String sql = "SELECT * from " + TABLE_HOST_LIST + " where mac = ?";
-        String args[] = new String[]{mac};
+        String sql = "SELECT * FROM " + TABLE_HOST_LIST + " WHERE host = ? AND mac = ? AND port =?";
+        String args[] = new String[]{bean.host, bean.macAddr, String.valueOf(bean.port)};
         Cursor result = db.rawQuery(sql, args);
         int count = result.getCount();
         result.close();

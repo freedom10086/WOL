@@ -6,90 +6,74 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends Activity implements View.OnClickListener, View.OnFocusChangeListener {
+import me.yluo.wol.db.MyDB;
+
+
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
 
     public static final String TAG = "WakeOnLan";
-    private EditText ip, mac, port;
+    private ListView hostList;
+    private MyDB myDB;
+    private List<HostBean> hosts = new ArrayList<>();
+    private HostAdapter adapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ip = (EditText) findViewById(R.id.ip);
-        mac = (EditText) findViewById(R.id.mac);
-        port = (EditText) findViewById(R.id.port);
-
-        mac.setOnFocusChangeListener(this);
-        findViewById(R.id.btn_send).setOnClickListener(this);
-    }
-
-
-    private static Toast notification;
-
-    public static void notifyUser(Context context, String message) {
-        if (notification != null) {
-            notification.setText(message);
-            notification.show();
-        } else {
-            notification = Toast.makeText(context, message, Toast.LENGTH_SHORT);
-            notification.show();
-        }
+        hostList = (ListView) findViewById(R.id.hosts);
+        myDB = new MyDB(this);
+        adapter = new HostAdapter();
+        hostList.setAdapter(adapter);
+        hostList.setOnItemClickListener(this);
     }
 
     @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_send:
-                sendMagicPacket();
-                break;
-        }
+    protected void onStart() {
+        super.onStart();
+        hosts = myDB.getHost();
+        adapter.notifyDataSetChanged();
     }
 
-    private void sendMagicPacket() {
-        String macStr = mac.getText().toString();
-        String ipStr = ip.getText().toString();
-        String portStr = port.getText().toString();
+    private void sendMagicPacket(HostBean bean) {
+        String macStr = bean.macAddr;
+        String ipStr = bean.host;
 
         if (!MagicPacket.validIp(ipStr)) {
-            ip.setError("ip地址不合法");
+            notifyUser(this, "ip地址不合法");
             return;
         }
 
         if (!MagicPacket.validateMac(macStr)) {
-            mac.setError("mac地址不合法");
+            notifyUser(this, "mac地址不合法");
             return;
         }
 
-        int portInt = 9;
-        if (!TextUtils.isEmpty(portStr)) {
-            portInt = Integer.parseInt(portStr);
-        }
-
-        HostBean model = new HostBean(ipStr, ipStr, portInt, macStr);
         MySendTask task = new MySendTask();
-        task.execute(model);
+        task.execute(bean);
     }
 
+
     @Override
-    public void onFocusChange(View view, boolean b) {
-        switch (view.getId()) {
-            case R.id.mac:
-                if (!b) {
-                    String input = mac.getText().toString();
-                    mac.setText(MagicPacket.formatMac(input));
-                }
-                break;
-        }
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        sendMagicPacket(hosts.get(i));
     }
 
     private class MySendTask extends AsyncTask<HostBean, Void, Boolean> {
@@ -105,7 +89,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             }
         }
 
-
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
@@ -118,6 +101,47 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
+
+    private class HostAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return hosts.size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return hosts.get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_host, null);
+
+            String nickName = hosts.get(i).nickName;
+            if (TextUtils.isEmpty(nickName)) {
+                nickName = hosts.get(i).host;
+            } else {
+                nickName = nickName + "(" + hosts.get(i).host + ")";
+            }
+
+            ((TextView) view.findViewById(R.id.name)).setText(nickName);
+            ((TextView) view.findViewById(R.id.mac)).setText(hosts.get(i).macAddr);
+            ((TextView) view.findViewById(R.id.index)).setText(String.valueOf(i + 1));
+
+            int count = hosts.get(i).count;
+            if (count > 0) {
+                ((TextView) view.findViewById(R.id.count)).setText("连接" + count + "次");
+            }
+
+            return view;
+        }
+    }
 
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -134,5 +158,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
         mi.setChecked(true);
         return true;
+    }
+
+
+    private static Toast notification;
+
+    public static void notifyUser(Context context, String message) {
+        if (notification != null) {
+            notification.setText(message);
+            notification.show();
+        } else {
+            notification = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+            notification.show();
+        }
     }
 }

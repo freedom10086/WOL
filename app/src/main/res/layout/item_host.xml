@@ -1,27 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="8dp">
+
+    <TextView
+        android:id="@+id/index"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_centerVertical="true"
+        android:layout_marginTop="-6dp"
+        android:background="@drawable/round_bg"
+        android:gravity="center"
+        android:text="1"
+        android:textStyle="bold" />
+
+    <View
+        android:id="@+id/status"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_alignEnd="@+id/index"
+        android:layout_below="@+id/index"
+        android:background="@drawable/status_point" />
 
     <TextView
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/index"
+        android:maxLines="1"
         android:textSize="16sp"
         android:textStyle="bold"
-        tools:text="192.168.31.1" />
+        tools:text="192.168.31.1:9" />
 
     <TextView
         android:id="@+id/mac"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/name"
+        android:layout_below="@+id/name"
         android:layout_marginTop="4dp"
         android:textAllCaps="true"
         android:textSize="16sp"
         tools:text="88:88:88:88:88:88" />
 
+    <TextView
+        android:id="@+id/count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/name"
+        android:layout_marginTop="4dp"
+        android:textSize="16sp"
+        tools:text="连接3次" />
 
-</LinearLayout>
+
+</RelativeLayout>

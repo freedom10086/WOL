@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.yluo.wol.db.MyDB;
+import me.yluo.wol.utils.NetUtil;
 
 
 public class AddActivity extends Activity implements AdapterView.OnItemClickListener, HostScanTask.ScanCallbak, AddHostDialog.AddHostListener {
@@ -76,8 +77,13 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
 
     @Override
     public void onAddHostOkClick(HostBean bean) {
-        // TODO: 2016/11/20
-        //Toast.makeText(this, "确认" + bean.host, Toast.LENGTH_SHORT).show();
+        if (myDB.isHostExist(bean)) {
+            MainActivity.notifyUser(this, "设备已经存在~~");
+            return;
+        }
+        myDB.addHost(bean);
+        MainActivity.notifyUser(this, "设备添加完成~~");
+        this.finish();
     }
 
     public class MyHostAdapter extends BaseAdapter {
@@ -99,12 +105,15 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_host, null);
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_scan_host, null);
             String nickName = hosts.get(i).nickName;
             if (TextUtils.isEmpty(nickName)) {
                 nickName = hosts.get(i).host;
             } else {
                 nickName = nickName + "(" + hosts.get(i).host + ")";
+            }
+            if (hosts.get(i).host.equals(NetUtil.getLocalIp())) {
+                hosts.get(i).macAddr = NetUtil.getLocalMacAddr(AddActivity.this);
             }
             ((TextView) view.findViewById(R.id.name)).setText(nickName);
             ((TextView) view.findViewById(R.id.mac)).setText(hosts.get(i).macAddr);
@@ -124,14 +133,23 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_refresh:
-                myDB.clearScanHosts();
-                hosts.clear();
-                adapter.notifyDataSetChanged();
-                hostScanTask = new HostScanTask("192.168.31.1", this);
-                hostScanTask.execute();
+                if (NetUtil.isWiFi(this)) {
+                    myDB.clearScanHosts();
+                    hosts.clear();
+                    adapter.notifyDataSetChanged();
+                    String ip = NetUtil.getLocalIp();
+                    hostScanTask = new HostScanTask(ip, this);
+                    hostScanTask.execute();
+                } else {
+                    MainActivity.notifyUser(this, "不在局域网无法搜索");
+                }
                 break;
             case android.R.id.home:
                 finish();
+                break;
+            case R.id.action_add:
+                AddHostDialog dialog = AddHostDialog.newInstance(null, this);
+                dialog.show(getFragmentManager(), "addHost");
                 break;
         }
         return super.onOptionsItemSelected(item);

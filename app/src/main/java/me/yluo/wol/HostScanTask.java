@@ -34,7 +34,14 @@ public class HostScanTask extends AsyncTask<Void, HostBean, Void> {
 
     public HostScanTask(String ip, ScanCallbak callbak) {
         this.callbak = callbak;
-        this.ip = ip;
+        if (!TextUtils.isEmpty(ip)) {
+            this.ip = ip;
+        } else {
+            this.ip = NetUtil.getLocalIp();
+        }
+        if (TextUtils.isEmpty(this.ip)) {
+            this.ip = NetUtil.DEFAULT_IP;
+        }
     }
 
     @Override
@@ -61,8 +68,6 @@ public class HostScanTask extends AsyncTask<Void, HostBean, Void> {
             Log.e(TAG, e.getMessage());
             mPool.shutdownNow();
             Thread.currentThread().interrupt();
-        } finally {
-            //mSave.closeDb();
         }
 
         return null;
