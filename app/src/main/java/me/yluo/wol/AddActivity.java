@@ -140,6 +140,7 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
                     String ip = NetUtil.getLocalIp();
                     hostScanTask = new HostScanTask(ip, this);
                     hostScanTask.execute();
+                    MainActivity.notifyUser(this, "开始扫描局域网中的设备~~");
                 } else {
                     MainActivity.notifyUser(this, "不在局域网无法搜索");
                 }

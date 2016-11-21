@@ -1,6 +1,7 @@
 package me.yluo.wol;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -25,7 +26,7 @@ import java.util.List;
 import me.yluo.wol.db.MyDB;
 
 
-public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
     public static final String TAG = "WakeOnLan";
     private ListView hostList;
@@ -43,6 +44,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         adapter = new HostAdapter();
         hostList.setAdapter(adapter);
         hostList.setOnItemClickListener(this);
+        hostList.setOnItemLongClickListener(this);
     }
 
     @Override
@@ -74,6 +76,28 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         sendMagicPacket(hosts.get(i));
+    }
+
+    @Override
+    public boolean onItemLongClick(final AdapterView<?> adapterView, View view, final int i, long l) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("删除设备");
+        builder.setMessage("你确定要删除【" + hosts.get(i).nickName + "(" + hosts.get(i).host + ")】吗?");
+        builder.setPositiveButton("删除", (dialogInterface, ii) -> {
+            HostBean hostBean = hosts.remove(i);
+            if (hostBean != null) {
+                notifyUser(MainActivity.this, "删除成功!");
+                myDB.deleteHost(hostBean.id);
+                adapter.notifyDataSetChanged();
+            } else {
+                notifyUser(MainActivity.this, "删除失败!");
+            }
+        });
+        builder.setNegativeButton("取消", (dialogInterface, i1) -> {
+
+        });
+        builder.create().show();
+        return true;
     }
 
     private class MySendTask extends AsyncTask<HostBean, Void, Boolean> {
