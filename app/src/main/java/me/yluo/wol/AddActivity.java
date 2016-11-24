@@ -22,7 +22,7 @@ import me.yluo.wol.db.MyDB;
 import me.yluo.wol.utils.NetUtil;
 
 
-public class AddActivity extends Activity implements AdapterView.OnItemClickListener, HostScanTask.ScanCallbak, AddHostDialog.AddHostListener {
+public class AddActivity extends Activity implements AdapterView.OnItemClickListener, HostScanTask.ScanCallbak, AddEditHostDialog.AddEditListener {
 
     private ListView hostsList;
     private List<HostBean> hosts = new ArrayList<>();
@@ -51,7 +51,7 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         HostBean bean = hosts.get(i);
-        AddHostDialog dialog = AddHostDialog.newInstance(bean, this);
+        AddEditHostDialog dialog = AddEditHostDialog.newInstance(AddEditHostDialog.TYPE_ADD, bean, this);
         dialog.show(getFragmentManager(), "addHost");
     }
 
@@ -76,7 +76,7 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
     }
 
     @Override
-    public void onAddHostOkClick(HostBean bean) {
+    public void onAddEditOkClick(HostBean bean) {
         if (myDB.isHostExist(bean)) {
             MainActivity.notifyUser(this, "设备已经存在~~");
             return;
@@ -149,7 +149,7 @@ public class AddActivity extends Activity implements AdapterView.OnItemClickList
                 finish();
                 break;
             case R.id.action_add:
-                AddHostDialog dialog = AddHostDialog.newInstance(null, this);
+                AddEditHostDialog dialog = AddEditHostDialog.newInstance(AddEditHostDialog.TYPE_ADD, null, this);
                 dialog.show(getFragmentManager(), "addHost");
                 break;
         }

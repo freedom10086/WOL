@@ -36,7 +36,6 @@ public class SQLiteHelper extends SQLiteOpenHelper {
                 + "host VARCHAR(25) NOT NULL,"
                 + "mac VARCHAR(20) NOT NULL,"
                 + "port INTEGER DEFAULT '9' NOT NULL,"
-                + "count INTEGER DEFAULT '0' NOT NULL,"
                 + "lastconnect  DATETIME NOT NULL"
                 + ")";
         db.execSQL(sql1);

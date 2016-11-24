@@ -8,7 +8,6 @@ public class HostBean {
     public String macAddr;
     public int port = 9;
     public String lastConnect;
-    public int count = 0;
 
     public HostBean(String host) {
         this.host = host;

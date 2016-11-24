@@ -72,8 +72,7 @@ public class MyDB {
         "host VARCHAR(25)   2"
         "mac VARCHAR(20) 3"
         "port  NOT NULL,4"
-        "count INTEGER 5"
-        "lastconnect  DATETIME  6"
+        "lastconnect  DATETIME  5"
      */
     public void addHost(HostBean bean) {
         initDb();
@@ -87,6 +86,19 @@ public class MyDB {
         this.db.execSQL(sql, args);
         this.db.close();
         Log.e("mydb", bean.nickName + "addHost");
+    }
+
+
+    public void updateHost(HostBean bean) {
+        initDb();
+        if (TextUtils.isEmpty(bean.nickName)) {
+            bean.nickName = bean.host;
+        }
+        String sql = "UPDATE " + TABLE_HOST_LIST + " SET nickName = ?,host = ?,mac = ?,port = ? WHERE id = ?";
+        Object args[] = new Object[]{bean.nickName, bean.host, bean.macAddr, bean.port, bean.id};
+        this.db.execSQL(sql, args);
+        this.db.close();
+        Log.e("mydb", bean.nickName + "updateHost");
     }
 
     public void deleteHost(int id) {
@@ -114,12 +126,6 @@ public class MyDB {
             //String nickName, String host, int port, String macAddr
             HostBean bean = new HostBean(result.getString(1), result.getString(2), result.getInt(4), result.getString(3));
             bean.id = result.getInt(0);
-            bean.count = result.getInt(5);
-            if (bean.count > 0) {
-                bean.lastConnect = result.getString(6);
-            } else {
-                bean.lastConnect = "";
-            }
             datas.add(bean);
         }
         result.close();

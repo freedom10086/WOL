@@ -1,5 +1,6 @@
 package me.yluo.wol;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,13 +28,14 @@ import java.util.List;
 import me.yluo.wol.db.MyDB;
 
 
-public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, AddEditHostDialog.AddEditListener {
 
     public static final String TAG = "WakeOnLan";
     private ListView hostList;
     private MyDB myDB;
     private List<HostBean> hosts = new ArrayList<>();
     private HostAdapter adapter;
+    private boolean isEditMode = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,11 +83,37 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
     @Override
     public boolean onItemLongClick(final AdapterView<?> adapterView, View view, final int i, long l) {
+        return switchEditMode(true);
+    }
+
+
+    private void editItem(int pos) {
+        HostBean bean = hosts.get(pos);
+        AddEditHostDialog dialog = AddEditHostDialog.newInstance(AddEditHostDialog.TYPE_EDIT, bean, this);
+        dialog.show(getFragmentManager(), "addHost");
+    }
+
+
+    @Override
+    public void onAddEditOkClick(HostBean bean) {
+        myDB.updateHost(bean);
+        for (int i = 0; i < hosts.size(); i++) {
+            if (hosts.get(i).id == bean.id) {
+                hosts.remove(i);
+                hosts.add(i, bean);
+                break;
+            }
+        }
+        adapter.notifyDataSetChanged();
+    }
+
+
+    private void deleteItem(int pos) {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("删除设备");
-        builder.setMessage("你确定要删除【" + hosts.get(i).nickName + "(" + hosts.get(i).host + ")】吗?");
+        builder.setMessage("你确定要删除【" + hosts.get(pos).nickName + "(" + hosts.get(pos).host + ")】吗?");
         builder.setPositiveButton("删除", (dialogInterface, ii) -> {
-            HostBean hostBean = hosts.remove(i);
+            HostBean hostBean = hosts.remove(pos);
             if (hostBean != null) {
                 notifyUser(MainActivity.this, "删除成功!");
                 myDB.deleteHost(hostBean.id);
@@ -97,8 +126,8 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         });
         builder.create().show();
-        return true;
     }
+
 
     private class MySendTask extends AsyncTask<HostBean, Void, Boolean> {
 
@@ -123,6 +152,25 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             }
 
         }
+    }
+
+    private boolean switchEditMode(boolean mode) {
+        if (mode != isEditMode) {
+            isEditMode = mode;
+            invalidateOptionsMenu();
+            adapter.notifyDataSetChanged();
+            ActionBar actionbar = getActionBar();
+            if (actionbar != null) {
+                if (isEditMode) {
+                    actionbar.setTitle("编辑主机");
+                } else {
+                    actionbar.setTitle(MainActivity.this.getString(R.string.app_name));
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -158,18 +206,32 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             ((TextView) view.findViewById(R.id.mac)).setText(hosts.get(i).macAddr);
             ((TextView) view.findViewById(R.id.index)).setText(String.valueOf(i + 1));
 
-            int count = hosts.get(i).count;
-            if (count > 0) {
-                ((TextView) view.findViewById(R.id.count)).setText("连接" + count + "次");
-            }
+            ImageView btnDelete, btnEdit;
+            btnDelete = (ImageView) view.findViewById(R.id.btn_delete);
+            btnEdit = (ImageView) view.findViewById(R.id.btn_edit);
 
+            if (!isEditMode) {
+                btnDelete.setVisibility(View.GONE);
+                btnEdit.setVisibility(View.GONE);
+            } else {
+                btnDelete.setOnClickListener(view1 -> {
+                    deleteItem(i);
+                });
+                btnEdit.setOnClickListener(view1 -> {
+                    editItem(i);
+                });
+            }
             return view;
         }
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_main, menu);
+        if (isEditMode) {
+            inflater.inflate(R.menu.menu_main_edit, menu);
+        } else {
+            inflater.inflate(R.menu.menu_main, menu);
+        }
         return true;
     }
 
@@ -177,6 +239,9 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         switch (mi.getItemId()) {
             case R.id.action_add:
                 startActivity(new Intent(this, AddActivity.class));
+                break;
+            case R.id.action_ok:
+                switchEditMode(false);
                 break;
         }
 
@@ -194,6 +259,13 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         } else {
             notification = Toast.makeText(context, message, Toast.LENGTH_SHORT);
             notification.show();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!switchEditMode(false)) {
+            super.onBackPressed();
         }
     }
 }

@@ -9,18 +9,21 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import me.yluo.wol.utils.NetUtil;
 
 
-public class AddHostDialog extends DialogFragment implements View.OnClickListener {
+public class AddEditHostDialog extends DialogFragment implements View.OnClickListener {
     private EditText nickname, host, mac, port;
     private HostBean bean;
-    private AddHostListener dialogListener;
+    private int type;
+    private AddEditListener dialogListener;
+    public static final int TYPE_EDIT = 0;
+    public static final int TYPE_ADD = 1;
 
-
-    public static AddHostDialog newInstance(HostBean hostBean, AddHostListener l) {
-        AddHostDialog frag = new AddHostDialog();
+    public static AddEditHostDialog newInstance(int type, HostBean hostBean, AddEditListener l) {
+        AddEditHostDialog frag = new AddEditHostDialog();
         if (hostBean == null) {
             String host = NetUtil.getLocalIp();
             if (TextUtils.isEmpty(host)) {
@@ -30,11 +33,12 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
         }
         frag.setHsot(hostBean);
         frag.setListner(l);
+        frag.type = type;
         return frag;
     }
 
 
-    private void setListner(AddHostListener listener) {
+    private void setListner(AddEditListener listener) {
         this.dialogListener = listener;
     }
 
@@ -49,7 +53,19 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.dialog_add_host, null);
         builder.setView(view);
-        builder.setTitle("添加设备");
+
+        TextView btnCancle = (TextView) view.findViewById(R.id.btn_cancel);
+        TextView btnOk = (TextView) view.findViewById(R.id.btn_ok);
+        btnCancle.setOnClickListener(this);
+        btnOk.setOnClickListener(this);
+
+        if (type == TYPE_ADD) {
+            builder.setTitle("添加设备");
+            btnOk.setText("添加");
+        } else {
+            builder.setTitle("编辑设备");
+            btnOk.setText("保存");
+        }
         host = (EditText) view.findViewById(R.id.host);
         nickname = (EditText) view.findViewById(R.id.nickname);
         mac = (EditText) view.findViewById(R.id.mac);
@@ -64,8 +80,6 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
             mac.setText(MagicPacket.formatMac(bean.macAddr));
         }
 
-        view.findViewById(R.id.btn_cancel).setOnClickListener(this);
-        view.findViewById(R.id.btn_ok).setOnClickListener(this);
         return builder.create();
     }
 
@@ -73,7 +87,7 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            dialogListener = (AddHostListener) context;
+            dialogListener = (AddEditListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
                     + " must implement NoticeDialogListener");
@@ -122,14 +136,14 @@ public class AddHostDialog extends DialogFragment implements View.OnClickListene
                 break;
             case R.id.btn_ok:
                 if (checkInput()) {
-                    dialogListener.onAddHostOkClick(bean);
+                    dialogListener.onAddEditOkClick(bean);
                     dismiss();
                 }
                 break;
         }
     }
 
-    public interface AddHostListener {
-        void onAddHostOkClick(HostBean bean);
+    public interface AddEditListener {
+        void onAddEditOkClick(HostBean bean);
     }
 }
